@@ -1,0 +1,19 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Ly Gia Dieu",
+      "age": 33
+    },
+    {
+      "name": "Nguyen Thi Luong",
+      "age": 36,
+      "id": 2
+    },
+    {
+      "name": "Khanh",
+      "age": 27,
+      "id": 3
+    }
+  ]
+}

@@ -117,95 +117,7 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"src/models/Attributes.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Attributes = void 0;
-
-var Attributes =
-/** @class */
-function () {
-  function Attributes(data) {
-    var _this = this;
-
-    this.data = data; //Note 1: <K extends keyof T> contraint => limits the types of K and
-    // the value of K or the type of K can only be one of KEYS of T
-    //an instant for this situation
-    //interface UserProps {
-    //     id: number;
-    //     name: string;
-    //     age: number;
-    //   }
-    //this means percisely the K can only ever be of the different keys (either id or name or age) of UserProps
-    //for more information pls review the lesson from TypeScript and JS
-    // In TypeScript : strings can be types
-    // In JavaScript: all keys of Object are strings
-    //=> in general, all keys of Object can actually be types as well
-    // NOTE 2: T[K] it is similar to JavaScript to get the value of key In JS Object
-    //For example:
-    // const colors = {red:'red'}
-    //colors['red]
-
-    this.get = function (key) {
-      return _this.data[key];
-    };
-
-    this.set = function (update) {
-      Object.assign(_this.data, update);
-    };
-  }
-
-  Attributes.prototype.getAll = function () {
-    return this.data;
-  };
-
-  return Attributes;
-}();
-
-exports.Attributes = Attributes;
-},{}],"src/models/Eventing.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Eventing = void 0;
-
-var Eventing =
-/** @class */
-function () {
-  function Eventing() {
-    var _this = this;
-
-    this.events = {};
-
-    this.on = function (eventName, callback) {
-      var handler = _this.events[eventName] || [];
-      handler.push(callback);
-      _this.events[eventName] = handler;
-    };
-
-    this.trigger = function (eventName) {
-      var handler = _this.events[eventName];
-
-      if (!handler || handler.length === 0) {
-        return;
-      }
-
-      handler.forEach(function (callback) {
-        callback();
-      });
-    };
-  }
-
-  return Eventing;
-}();
-
-exports.Eventing = Eventing;
-},{}],"node_modules/axios/lib/helpers/bind.js":[function(require,module,exports) {
+})({"node_modules/axios/lib/helpers/bind.js":[function(require,module,exports) {
 'use strict';
 
 module.exports = function bind(fn, thisArg) {
@@ -1995,7 +1907,156 @@ module.exports.default = axios;
 
 },{"./utils":"node_modules/axios/lib/utils.js","./helpers/bind":"node_modules/axios/lib/helpers/bind.js","./core/Axios":"node_modules/axios/lib/core/Axios.js","./core/mergeConfig":"node_modules/axios/lib/core/mergeConfig.js","./defaults":"node_modules/axios/lib/defaults.js","./cancel/Cancel":"node_modules/axios/lib/cancel/Cancel.js","./cancel/CancelToken":"node_modules/axios/lib/cancel/CancelToken.js","./cancel/isCancel":"node_modules/axios/lib/cancel/isCancel.js","./helpers/spread":"node_modules/axios/lib/helpers/spread.js"}],"node_modules/axios/index.js":[function(require,module,exports) {
 module.exports = require('./lib/axios');
-},{"./lib/axios":"node_modules/axios/lib/axios.js"}],"src/models/ApiSync.ts":[function(require,module,exports) {
+},{"./lib/axios":"node_modules/axios/lib/axios.js"}],"src/models/Eventing.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Eventing = void 0;
+
+var Eventing =
+/** @class */
+function () {
+  function Eventing() {
+    var _this = this;
+
+    this.events = {};
+
+    this.on = function (eventName, callback) {
+      var handler = _this.events[eventName] || [];
+      handler.push(callback);
+      _this.events[eventName] = handler;
+    };
+
+    this.trigger = function (eventName) {
+      var handler = _this.events[eventName];
+
+      if (!handler || handler.length === 0) {
+        return;
+      }
+
+      handler.forEach(function (callback) {
+        callback();
+      });
+    };
+  }
+
+  return Eventing;
+}();
+
+exports.Eventing = Eventing;
+},{}],"src/models/Collections.ts":[function(require,module,exports) {
+"use strict";
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Collections = void 0;
+
+var axios_1 = __importDefault(require("axios"));
+
+var Eventing_1 = require("./Eventing"); //<T, K> is for User and UserProps accordingly
+
+
+var Collections =
+/** @class */
+function () {
+  function Collections(rootURL, deserialize) {
+    this.rootURL = rootURL;
+    this.deserialize = deserialize;
+    this.models = [];
+    this.events = new Eventing_1.Eventing();
+  }
+
+  Object.defineProperty(Collections.prototype, "on", {
+    get: function get() {
+      return this.events.on;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  Object.defineProperty(Collections.prototype, "trigger", {
+    get: function get() {
+      return this.events.trigger;
+    },
+    enumerable: false,
+    configurable: true
+  });
+
+  Collections.prototype.fetch = function () {
+    var _this = this;
+
+    axios_1.default.get(this.rootURL).then(function (response) {
+      response.data.forEach(function (value) {
+        //   const user = User.buildUser(value);
+        _this.models.push(_this.deserialize(value));
+      });
+
+      _this.trigger("change");
+    });
+  };
+
+  return Collections;
+}();
+
+exports.Collections = Collections;
+},{"axios":"node_modules/axios/index.js","./Eventing":"src/models/Eventing.ts"}],"src/models/Attributes.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Attributes = void 0;
+
+var Attributes =
+/** @class */
+function () {
+  function Attributes(data) {
+    var _this = this;
+
+    this.data = data; //Note 1: <K extends keyof T> contraint => limits the types of K and
+    // the value of K or the type of K can only be one of KEYS of T
+    //an instant for this situation
+    //interface UserProps {
+    //     id: number;
+    //     name: string;
+    //     age: number;
+    //   }
+    //this means percisely the K can only ever be of the different keys (either id or name or age) of UserProps
+    //for more information pls review the lesson from TypeScript and JS
+    // In TypeScript : strings can be types
+    // In JavaScript: all keys of Object are strings
+    //=> in general, all keys of Object can actually be types as well
+    // NOTE 2: T[K] it is similar to JavaScript to get the value of key In JS Object
+    //For example:
+    // const colors = {red:'red'}
+    //colors['red]
+
+    this.get = function (key) {
+      return _this.data[key];
+    };
+
+    this.set = function (update) {
+      Object.assign(_this.data, update);
+    };
+  }
+
+  Attributes.prototype.getAll = function () {
+    return this.data;
+  };
+
+  return Attributes;
+}();
+
+exports.Attributes = Attributes;
+},{}],"src/models/ApiSync.ts":[function(require,module,exports) {
 "use strict";
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -2176,16 +2237,18 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var Collections_1 = require("./models/Collections");
+
 var User_1 = require("./models/User");
 
-var user = User_1.User.builUser({
-  id: 1
+var collections = new Collections_1.Collections("http://localhost:3000/users", function (json) {
+  return User_1.User.builUser(json);
 });
-user.on("change", function () {
-  console.log(user);
+collections.on("change", function () {
+  console.log(collections);
 });
-user.fetch();
-},{"./models/User":"src/models/User.ts"}],"../../.nvm/versions/node/v10.13.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+collections.fetch();
+},{"./models/Collections":"src/models/Collections.ts","./models/User":"src/models/User.ts"}],"../../.nvm/versions/node/v10.13.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -2213,7 +2276,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56826" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63826" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

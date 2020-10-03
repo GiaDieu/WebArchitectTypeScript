@@ -1,19 +1,12 @@
-import { User } from "../models/User";
+import { View } from "./View";
+import { User, UserProps } from "../models/User";
 
-export class UserForm {
-  constructor(public parent: Element, public model: User) {
-    this.bindModel();
-  }
-
-  bindModel(): void {
-    this.model.on("change", () => {
-      this.render();
-    });
-  }
-
+export class UserForm extends View<User, UserProps> {
   eventsMap(): { [key: string]: () => void } {
     return {
       "click:.set-age": this.onSetAgeClick,
+      "click:.set-name": this.onSetNameClick,
+      "click:.save-model": this.onSaveClick,
     };
   }
 
@@ -21,42 +14,26 @@ export class UserForm {
     this.model.setRandomAge();
   };
 
+  onSetNameClick = (): void => {
+    const input = this.parent.querySelector("input");
+    if (input) {
+      const name = input.value;
+      this.model.set({ name });
+    }
+  };
+
+  onSaveClick = (): void => {
+    this.model.save();
+  };
+
   template(): string {
     return `
         <div>
-            <h1>UserForm</h1>
-            <div>User Name: ${this.model.get("name")}</div>
-            <div>User Age: ${this.model.get("age")}</div>
-            <input/>
-            <button>Click Me!</button>
+            <input placeholder="${this.model.get("name")}"/>
+            <button class="set-name">Change Name</button>
             <button class="set-age">Set Random Age</button>
+            <button class="save-model">Save User</button>
         </div>
         `;
   }
-
-  bindEvents(fragment: DocumentFragment): void {
-    const eventsMap = this.eventsMap();
-    for (let eventKey in eventsMap) {
-      //eventKey = 'click:button';
-      const [eventName, selector] = eventKey.split(":");
-      //expected: eventName: 'click'; selector: 'button'
-      fragment.querySelectorAll(selector).forEach((element) => {
-        element.addEventListener(eventName, eventsMap[eventKey]);
-      });
-    }
-  }
-
-  render(): void {
-    this.parent.innerHTML = ""; // everytime render anything, we look previous the parent and remove it
-
-    const templateElement = document.createElement("template");
-    templateElement.innerHTML = this.template();
-    this.bindEvents(templateElement.content); //understanding DocumentFragment below
-
-    this.parent.append(templateElement.content);
-  }
-
-  //note: template Element => content such as HTML elements: Form, Input, Button (reference to a 'DocumentFragment')
-  //Explanation: DocumentFragment is essentially an object that contains a reference of some HTML,
-  //purpose to hold some HTML inside of memory before it attached and inserted to a DOM
 }
